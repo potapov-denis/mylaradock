@@ -293,18 +293,18 @@ services:
       labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-proxy"
-      - "traefik.http.services.${TRAEFIK_BALANCER_PROJECT_NAME}.loadbalancer.server.port=80"
+      - "traefik.http.services.${TRAEFIK_BALANCER_PROJECT_NAME}-nginx.loadbalancer.server.port=80"
 
       # https router
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.rule=Host(`${ACME_DOMAIN}`, `www.${ACME_DOMAIN}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.entrypoints=https"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.middlewares=www-redirectregex"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.service=${TRAEFIK_BALANCER_PROJECT_NAME}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.service=${TRAEFIK_BALANCER_PROJECT_NAME}-nginx"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.tls.certresolver=letsencrypt"
 
       # http router
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.rule=Host(`${ACME_DOMAIN}`, `www.${ACME_DOMAIN}`)"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.service=${TRAEFIK_BALANCER_PROJECT_NAME}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.service=${TRAEFIK_BALANCER_PROJECT_NAME}-nginx"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.entrypoints=http"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.middlewares=strip-path-prefix"
 
