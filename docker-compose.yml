@@ -293,18 +293,18 @@ services:
       labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-proxy"
-      - "traefik.http.services.nginx.loadbalancer.server.port=80"
+      - "traefik.http.services.${TRAEFIK_BALANCER_PROJECT_NAME}.loadbalancer.server.port=80"
 
       # https router
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.rule=Host(`${ACME_DOMAIN}`, `www.${ACME_DOMAIN}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.entrypoints=https"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.middlewares=www-redirectregex"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.service=nginx"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.service=${TRAEFIK_BALANCER_PROJECT_NAME}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-websecure.tls.certresolver=letsencrypt"
 
       # http router
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.rule=Host(`${ACME_DOMAIN}`, `www.${ACME_DOMAIN}`)"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.service=nginx"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.service=${TRAEFIK_BALANCER_PROJECT_NAME}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.entrypoints=http"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-web.middlewares=strip-path-prefix"
 
@@ -327,6 +327,7 @@ services:
         - MYSQL_USER=${MYSQL_USER}
         - MYSQL_PASSWORD=${MYSQL_PASSWORD}
         - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+        - MYSQL_ROOT_HOST=host.docker.internal
         - TZ=${WORKSPACE_TIMEZONE}
       volumes:
         - ${DATA_PATH_HOST}/mysql:/var/lib/mysql
@@ -335,6 +336,8 @@ services:
         - "${MYSQL_PORT}:3306"
       networks:
         - backend
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
 
 
 
@@ -358,9 +361,11 @@ services:
         - MYSQL_USER=${MARIADB_USER}
         - MYSQL_PASSWORD=${MARIADB_PASSWORD}
         - MYSQL_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+        - MYSQL_ROOT_HOST=host.docker.internal
       networks:
         - backend
-
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
 
 ### phpMyAdmin ###########################################
     phpmyadmin:
@@ -373,14 +378,26 @@ services:
         - MAX_EXECUTION_TIME=${PMA_MAX_EXECUTION_TIME}
         - MEMORY_LIMIT=${PMA_MEMORY_LIMIT}
         - UPLOAD_LIMIT=${PMA_UPLOAD_LIMIT}
-      ports:
-        - "${PMA_PORT}:80"
+        - PMA_HOST=host.docker.internal
+        - PMA_ABSOLUTE_URI=https://${ACME_DOMAIN}/pma/
       depends_on:
         - "${PMA_DB_ENGINE}"
       networks:
         - frontend
         - traefik-proxy
         - backend
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik-proxy"
+        - "traefik.http.services.${TRAEFIK_BALANCER_PROJECT_NAME}-phpmyadmin.loadbalancer.server.port=80"
+        - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-phpmyadmin.rule=Host(`${ACME_DOMAIN}`, `www.${ACME_DOMAIN}`) && PathPrefix(`/pma/`)"
+        - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-phpmyadmin.entrypoints=https"
+        - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-phpmyadmin.service=${TRAEFIK_BALANCER_PROJECT_NAME}-phpmyadmin"
+        - "traefik.http.middlewares.phpmyadmin-prefix.stripprefix.prefixes=/pma/"
+        - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-phpmyadmin.middlewares=phpmyadmin-prefix"
+        - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-phpmyadmin.tls=true"
 
 ### Certbot #########################################
     certbot:
