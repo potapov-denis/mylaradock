@@ -327,17 +327,14 @@ services:
         - MYSQL_USER=${MYSQL_USER}
         - MYSQL_PASSWORD=${MYSQL_PASSWORD}
         - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-        - MYSQL_ROOT_HOST=host.docker.internal
         - TZ=${WORKSPACE_TIMEZONE}
       volumes:
         - ${DATA_PATH_HOST}/mysql:/var/lib/mysql
-        - ${MYSQL_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+        - ${MYSQL_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d:ro
       ports:
         - "${MYSQL_PORT}:3306"
       networks:
         - backend
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
 
 
 
@@ -352,7 +349,7 @@ services:
           - MARIADB_VERSION=${MARIADB_VERSION}
       volumes:
         - ${DATA_PATH_HOST}/mariadb:/var/lib/mysql
-        - ${MARIADB_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+        - ${MARIADB_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d:ro
       ports:
         - "${MARIADB_PORT}:3306"
       environment:
@@ -361,11 +358,8 @@ services:
         - MYSQL_USER=${MARIADB_USER}
         - MYSQL_PASSWORD=${MARIADB_PASSWORD}
         - MYSQL_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
-        - MYSQL_ROOT_HOST=host.docker.internal
       networks:
         - backend
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
 
 ### phpMyAdmin ###########################################
     phpmyadmin:
@@ -378,7 +372,6 @@ services:
         - MAX_EXECUTION_TIME=${PMA_MAX_EXECUTION_TIME}
         - MEMORY_LIMIT=${PMA_MEMORY_LIMIT}
         - UPLOAD_LIMIT=${PMA_UPLOAD_LIMIT}
-        - PMA_HOST=host.docker.internal
         - PMA_ABSOLUTE_URI=https://${ACME_DOMAIN}/pma/
       depends_on:
         - "${PMA_DB_ENGINE}"
@@ -386,8 +379,6 @@ services:
         - frontend
         - traefik-proxy
         - backend
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=traefik-proxy"
